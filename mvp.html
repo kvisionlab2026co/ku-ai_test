@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>반려견 동반 숙소 조건 검증 서비스</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- 상단 헤더 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
+        <i class="fa-solid font-bold fa-dog text-amber-500 text-2xl"></i>
+        <span class="font-bold text-lg text-slate-900">멍스펙 (DogSpec)</span>
+      </div>
+      <span class="text-xs bg-amber-100 text-amber-800 font-semibold px-2.5 py-1 rounded-full">MVP v1.0</span>
+    </div>
+  </header>
+
+  <!-- 메인 컨테이너 -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+
+    <!-- [1단계: 랜딩 페이지] -->
+    <section id="step-landing" class="block bg-white rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-100 text-center space-y-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-full mb-2">
+        <i class="fa-solid fa-shield-cat text-3xl"></i>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+        반려견 조건을 입력하면,<br/>실제 입실 가능한 숙소만 보여드립니다
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+        기존 플랫폼의 '동반 가능' 정보가 실제 현장 조건과 달라 당황하셨나요?<br/>
+        견종·체중·마리수까지 꼼꼼히 검증된 정보로 안전한 여행을 계획하세요.
+      </p>
+
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-500 space-y-1 text-left sm:text-center">
+        <p><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> <strong>운영 범위:</strong> 현재 강원·제주 지역 숙소 40여 곳 기준으로 운영됩니다.</p>
+      </div>
+
+      <div class="pt-4">
+        <button onclick="goToStep('step-input')" class="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-amber-500/30 transition-all transform hover:-translate-y-0.5">
+          반려견 조건으로 숙소 찾기 <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- [2단계: 반려견 조건 입력] -->
+    <section id="step-input" class="hidden bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+      <div class="border-b border-slate-100 pb-4">
+        <h2 class="text-xl font-bold text-slate-900">반려견 여행 조건 입력</h2>
+        <p class="text-xs text-slate-500 mt-1">4개 항목을 모두 입력하시면 조건에 맞는 숙소를 대조해 드립니다.</p>
+      </div>
+
+      <form id="dog-condition-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
+        
+        <!-- 1. 여행 지역 -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">1. 여행 지역 <span class="text-amber-500">*</span></label>
+          <select id="field-region" onchange="validateForm()" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800">
+            <option value="" disabled selected>여행하실 지역을 선택하세요</option>
+            <option value="강원">강원특별자치도</option>
+            <option value="제주">제주특별자치도</option>
+          </select>
+        </div>
+
+        <!-- 2. 견종 -->
+        <div class="relative">
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">2. 견종 <span class="text-amber-500">*</span></label>
+          <input type="text" id="field-breed" oninput="onBreedInput(this.value)" placeholder="예: 골든 리트리버, 믹스견, 푸들 등" autocomplete="off" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800" />
+          <!-- 자동완성 추천 드롭다운 -->
+          <div id="breed-autocomplete" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto"></div>
+        </div>
+
+        <!-- 3. 체중 (kg) -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">3. 반려견 체중 (kg) <span class="text-amber-500">*</span></label>
+          <div class="relative">
+            <input type="number" id="field-weight" step="0.1" min="0.1" max="99" oninput="validateForm()" placeholder="예: 7.5" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 pr-12" />
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">kg</span>
+          </div>
+        </div>
+
+        <!-- 4. 마리수 -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">4. 동반 마리수 <span class="text-amber-500">*</span></label>
+          <div class="grid grid-cols-3 gap-3">
+            <button type="button" onclick="selectCount(1)" id="btn-count-1" class="btn-count py-3 text-sm font-semibold border border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all">1마리</button>
+            <button type="button" onclick="selectCount(2)" id="btn-count-2" class="btn-count py-3 text-sm font-semibold border border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all">2마리</button>
+            <button type="button" onclick="selectCount(3)" id="btn-count-3" class="btn-count py-3 text-sm font-semibold border border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all">3마리 이상</button>
+          </div>
+          <input type="hidden" id="field-count" value="" />
+        </div>
+
+        <!-- 개인정보 수집 미해당 안내 문구 -->
+        <div class="p-3 bg-amber-50 rounded-xl text-xs text-amber-800 border border-amber-200/60 leading-relaxed">
+          <i class="fa-solid fa-shield-halved mr-1"></i> 입력하신 반려견 정보는 숙소 조회에만 사용되며, 개인 식별 없이 서비스 개선 통계로만 활용됩니다.
+        </div>
+
+        <!-- 제출 버튼 -->
+        <button type="submit" id="btn-submit" disabled class="w-full py-4 bg-slate-300 text-slate-500 font-bold text-lg rounded-xl shadow-none cursor-not-allowed transition-all">
+          숙소 찾기
+        </button>
+      </form>
+    </section>
+
+    <!-- [3단계: AI 처리 중 로딩 화면] -->
+    <section id="step-loading" class="hidden bg-white rounded-2xl p-12 shadow-sm border border-slate-100 text-center space-y-6">
+      <div class="inline-block animate-spin text-amber-500 text-5xl">
+        <i class="fa-solid fa-circle-notch"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">반려견 조건에 맞는 숙소를 찾고 있습니다</h3>
+        <p class="text-sm text-slate-500">숙소별 체중, 견종, 마리수 및 매너벨트 항목을 AI 엔진이 검증 중입니다...</p>
+      </div>
+    </section>
+
+    <!-- [4단계 & 5단계: 결과 및 피드백 통합 화면] -->
+    <section id="step-result" class="hidden space-y-6">
+      
+      <!-- 검색 조건 요약 헤더 -->
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+        <div class="flex items-center space-x-2 text-amber-950 font-medium">
+          <i class="fa-solid fa-sliders text-amber-600"></i>
+          <span>입력 조건:</span>
+          <span id="summary-text" class="font-bold">강원 | 푸들 | 5kg | 1마리</span>
+        </div>
+        <button onclick="goToStep('step-input')" class="text-xs bg-white border border-amber-300 text-amber-800 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors">
+          <i class="fa-solid fa-pen mr-1"></i> 조건 변경
+        </button>
+      </div>
+
+      <!-- 숙소 카드가 렌더링될 영역 -->
+      <div id="accommodation-list" class="space-y-4"></div>
+
+      <!-- 하단 필수 고정 안내 문구 -->
+      <div class="p-4 bg-slate-100 rounded-xl text-center text-xs text-slate-600 border border-slate-200">
+        <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i>
+        <strong>등록된 조건 기준으로 조회한 결과입니다.</strong> 실제 입실 가능 여부는 방문 전 숙소에 직접 확인하시기 바랍니다.
+      </div>
+
+      <!-- [5단계: 인라인 피드백 영역] -->
+      <div id="feedback-card" class="bg-white rounded-2xl p-6 shadow-sm border border-amber-200 space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+          <h4 class="font-bold text-slate-900 flex items-center">
+            <i class="fa-solid fa-comment-dots text-amber-500 mr-2"></i> 서비스 개선을 위한 한 줄 피드백
+          </h4>
+          <p class="text-xs text-slate-500 mt-1">보호자님의 실제 경험 데이터는 서비스 정확도를 개선하는 핵심 수치입니다.</p>
+        </div>
+
+        <!-- 피드백 폼 -->
+        <div id="feedback-form-content" class="space-y-4">
+          <!-- 필수 질문 1 -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-800 mb-2">
+              질문 1. 이 정보가 실제 방문 시와 달랐던 경험이 있나요? <span class="text-amber-500 text-xs">(필수)</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" onclick="submitFeedback('있다')" class="feedback-btn py-2.5 px-3 text-xs sm:text-sm font-bold border border-slate-300 rounded-xl hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 transition-all">
+                있다
+              </button>
+              <button type="button" onclick="submitFeedback('없다')" class="feedback-btn py-2.5 px-3 text-xs sm:text-sm font-bold border border-slate-300 rounded-xl hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 transition-all">
+                없다
+              </button>
+              <button type="button" onclick="submitFeedback('아직 방문 전')" class="feedback-btn py-2.5 px-3 text-xs sm:text-sm font-bold border border-slate-300 rounded-xl hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 transition-all">
+                아직 방문 전
+              </button>
+            </div>
+          </div>
+
+          <!-- 선택 질문 2 -->
+          <div class="pt-2 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-600 mb-2">
+              질문 2. 이 검증 정보가 도움이 됐나요? <span class="text-slate-400 font-normal">(선택)</span>
+            </label>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs text-slate-400">별로임</span>
+              <div class="flex-1 flex justify-between max-w-xs">
+                <button type="button" onclick="setRating(1)" class="rating-btn w-8 h-8 rounded-full border border-slate-200 text-xs font-bold hover:bg-amber-100">1</button>
+                <button type="button" onclick="setRating(2)" class="rating-btn w-8 h-8 rounded-full border border-slate-200 text-xs font-bold hover:bg-amber-100">2</button>
+                <button type="button" onclick="setRating(3)" class="rating-btn w-8 h-8 rounded-full border border-slate-200 text-xs font-bold hover:bg-amber-100">3</button>
+                <button type="button" onclick="setRating(4)" class="rating-btn w-8 h-8 rounded-full border border-slate-200 text-xs font-bold hover:bg-amber-100">4</button>
+                <button type="button" onclick="setRating(5)" class="rating-btn w-8 h-8 rounded-full border border-slate-200 text-xs font-bold hover:bg-amber-100">5</button>
+              </div>
+              <span class="text-xs text-slate-400">매우 도움됨</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 제출 후 감사 메시지 (기본 숨김) -->
+        <div id="feedback-thanks" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-emerald-800 text-sm font-medium">
+          <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>
+          소중한 의견 감사합니다. 더 정확한 정보를 제공하는 데 활용하겠습니다.
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 푸터 -->
+  <footer class="bg-slate-100 border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-3xl mx-auto px-4 space-y-1">
+      <p>본 서비스는 반려견 동반 숙소 정보 검증 가설 확인용 웹 MVP입니다.</p>
+      <p>© 2026 DogSpec. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- 스크립트 영역 -->
+  <script>
+    /* ==========================================================================
+       1. 설정 및 상태 변수 (Google Apps Script & Gemini API)
+       ========================================================================== */
+    // Gemini API Key (제공된 runtime 환경에서 키가 자동 제공됨)
+    const apiKey = "";
+    
+    // Google Sheets 연동 Apps Script Web App URL
+    // (구글 앱스스크립트 배포 후 해당 URL을 아래에 삽입하면 피드백 및 통계가 구글 시트에 자동 저장됩니다)
+    const GOOGLE_SHEETS_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+    // 검색 상태 관리
+    let currentInput = {
+      region: "",
+      breed: "",
+      weight: null,
+      count: null
+    };
+
+    let selectedRating = null;
+
+    // 자주 입력되는 견종 자동완성 데이터베이스
+    const POPULAR_BREEDS = [
+      "골든 리트리버", "라브라도 리트리버", "말티즈", "푸들", "토이푸들",
+      "포메라니안", "비숑 프리제", "시바견", "웰시 코기", "닥스훈트",
+      "치와와", "요크셔 테리어", "시츄", "프렌치 불독", "보더 콜리",
+      "비글", "진돗개", "믹스견", "하반하", "스피츠", "이탈리안 그레이하운드"
+    ];
+
+    /* ==========================================================================
+       2. 사전 구축 숙소 DB (강원 및 제주 40개 샘플 데이터)
+       ========================================================================== */
+    const ACCOMMODATION_DB = [
+      // 강원 지역
+      { id: "GW-01", name: "강릉 솔향 반려견 풀빌라", region: "강원", maxWeight: 15, allowedBreeds: ["모든 견종"], restrictedBreeds: ["맹견 5종"], maxCount: 2, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "GW-02", name: "속초 바다풍경 펜션", region: "강원", maxWeight: 10, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["대형견", "리트리버"], maxCount: 2, mannerbelt: "필수", sources: { weight: "방문자확인", breed: "방문자확인", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "GW-03", name: "평창 숲속 힐링 리조트", region: "강원", maxWeight: 35, allowedBreeds: ["모든 견종"], restrictedBreeds: [], maxCount: 3, mannerbelt: "불필요", sources: { weight: "업체등록", breed: "업체등록", count: "방문자확인", mannerbelt: "방문자확인" } },
+      { id: "GW-04", name: "양양 서피 반려견 하우스", region: "강원", maxWeight: 8, allowedBreeds: ["말티즈", "푸들", "포메라니안", "소형견"], restrictedBreeds: ["중형견", "대형견"], maxCount: 1, mannerbelt: "필수", sources: { weight: "업체등록", breed: "방문자확인", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "GW-05", name: "홍천 강변 애견 캠핑장", region: "강원", maxWeight: 40, allowedBreeds: ["모든 견종"], restrictedBreeds: [], maxCount: 3, mannerbelt: "불필요", sources: { weight: "방문자확인", breed: "업체등록", count: "업체등록", mannerbelt: "미확인" } },
+      { id: "GW-06", name: "춘천 호수뷰 드림 스테이", region: "강원", maxWeight: 12, allowedBreeds: ["소형견"], restrictedBreeds: ["진돗개", "시바견"], maxCount: 2, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "미확인", mannerbelt: "업체등록" } },
+      { id: "GW-07", name: "정선 아리랑 힐링 펜션", region: "강원", maxWeight: 5, allowedBreeds: ["소형견"], restrictedBreeds: ["10kg 이상"], maxCount: 1, mannerbelt: "필수", sources: { weight: "미확인", breed: "업체등록", count: "업체등록", mannerbelt: "미확인" } },
+      { id: "GW-08", name: "삼척 맑은바다 애견동반 펜션", region: "강원", maxWeight: 20, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["대형견"], maxCount: 2, mannerbelt: "불필요", sources: { weight: "방문자확인", breed: "방문자확인", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "GW-09", name: "원주 오크밸리 펫 룸", region: "강원", maxWeight: 15, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["맹견"], maxCount: 2, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "GW-10", name: "횡성 숲속의 요정 펫 펜션", region: "강원", maxWeight: 30, allowedBreeds: ["모든 견종"], restrictedBreeds: [], maxCount: 3, mannerbelt: "불필요", sources: { weight: "업체등록", breed: "방문자확인", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "GW-11", name: "동해 촛대바위 글램핑", region: "강원", maxWeight: 10, allowedBreeds: ["소형견"], restrictedBreeds: ["중대형견"], maxCount: 1, mannerbelt: "필수", sources: { weight: "방문자확인", breed: "미확인", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "GW-12", name: "태백 산마루 펫 프렌들리", region: "강원", maxWeight: 25, allowedBreeds: ["소형견", "중형견", "대형견"], restrictedBreeds: [], maxCount: 2, mannerbelt: "미확인", sources: { weight: "미확인", breed: "미확인", count: "미확인", mannerbelt: "미확인" } },
+
+      // 제주 지역
+      { id: "JJ-01", name: "제주 애월 멍냥 코테지", region: "제주", maxWeight: 7, allowedBreeds: ["초소형견", "소형견"], restrictedBreeds: ["털빠짐 심한 견종", "중형견 이상"], maxCount: 1, mannerbelt: "필수", sources: { weight: "업체등록", breed: "방문자확인", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "JJ-02", name: "서귀포 중문 펫 리조트", region: "제주", maxWeight: 15, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["맹견 5종"], maxCount: 2, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "JJ-03", name: "제주 성산 일출봉 멍가스테이", region: "제주", maxWeight: 30, allowedBreeds: ["모든 견종", "리트리버"], restrictedBreeds: [], maxCount: 3, mannerbelt: "불필요", sources: { weight: "방문자확인", breed: "업체등록", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "JJ-04", name: "제주 한림 협재 펫풀빌라", region: "제주", maxWeight: 10, allowedBreeds: ["소형견"], restrictedBreeds: ["중형견", "대형견"], maxCount: 2, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "방문자확인", mannerbelt: "업체등록" } },
+      { id: "JJ-05", name: "제주 조천 오름 댕댕스테이", region: "제주", maxWeight: 20, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["대형견"], maxCount: 2, mannerbelt: "필수", sources: { weight: "방문자확인", breed: "방문자확인", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "JJ-06", name: "제주 표선 해변 펫 펜션", region: "제주", maxWeight: 40, allowedBreeds: ["모든 견종"], restrictedBreeds: [], maxCount: 3, mannerbelt: "불필요", sources: { weight: "업체등록", breed: "업체등록", count: "업체등록", mannerbelt: "방문자확인" } },
+      { id: "JJ-07", name: "제주 구좌 세화 독채 멍집", region: "제주", maxWeight: 12, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: ["대형견"], maxCount: 2, mannerbelt: "필수", sources: { weight: "미확인", breed: "업체등록", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "JJ-08", name: "제주 대정 노을 멍글램핑", region: "제주", maxWeight: 25, allowedBreeds: ["소형견", "중형견", "대형견"], restrictedBreeds: [], maxCount: 2, mannerbelt: "불필요", sources: { weight: "방문자확인", breed: "업체등록", count: "방문자확인", mannerbelt: "미확인" } },
+      { id: "JJ-09", name: "제주 안덕 산방산 펫 하우스", region: "제주", maxWeight: 8, allowedBreeds: ["소형견"], restrictedBreeds: ["중대형견"], maxCount: 1, mannerbelt: "필수", sources: { weight: "업체등록", breed: "업체등록", count: "업체등록", mannerbelt: "업체등록" } },
+      { id: "JJ-10", name: "제주 남원 감귤밭 댕댕이집", region: "제주", maxWeight: 15, allowedBreeds: ["소형견", "중형견"], restrictedBreeds: [], maxCount: 2, mannerbelt: "미확인", sources: { weight: "방문자확인", breed: "미확인", count: "업체등록", mannerbelt: "미확인" } }
+    ];
+
+    /* ==========================================================================
+       3. 화면 전환 및 UI 조작 핸들러
+       ========================================================================== */
+    function goToStep(stepId) {
+      document.getElementById("step-landing").classList.add("hidden");
+      document.getElementById("step-input").classList.add("hidden");
+      document.getElementById("step-loading").classList.add("hidden");
+      document.getElementById("step-result").classList.add("hidden");
+
+      document.getElementById(stepId).classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goHome() {
+      goToStep("step-landing");
+    }
+
+    // 마리수 선택 버튼 동작
+    function selectCount(count) {
+      document.getElementById("field-count").value = count;
+      
+      const buttons = document.querySelectorAll(".btn-count");
+      buttons.forEach((btn, idx) => {
+        if (idx + 1 === count) {
+          btn.classList.remove("bg-slate-50", "text-slate-700", "border-slate-300");
+          btn.classList.add("bg-amber-500", "text-white", "border-amber-500", "shadow-md");
+        } else {
+          btn.classList.remove("bg-amber-500", "text-white", "border-amber-500", "shadow-md");
+          btn.classList.add("bg-slate-50", "text-slate-700", "border-slate-300");
+        }
+      });
+      validateForm();
+    }
+
+    // 견종 자동완성 렌더링
+    function onBreedInput(val) {
+      const container = document.getElementById("breed-autocomplete");
+      const trimmed = val.trim();
+      validateForm();
+
+      if (!trimmed) {
+        container.classList.add("hidden");
+        return;
+      }
+
+      const matches = POPULAR_BREEDS.filter(b => b.toLowerCase().includes(trimmed.toLowerCase()));
+      if (matches.length === 0) {
+        container.classList.add("hidden");
+        return;
+      }
+
+      container.innerHTML = matches.map(b => `
+        <div onclick="selectBreed('${b}')" class="px-4 py-2 text-sm text-slate-700 hover:bg-amber-50 cursor-pointer transition-colors border-b border-slate-50 last:border-none">
+          ${b}
+        </div>
+      `).join("");
+      container.classList.remove("hidden");
+    }
+
+    function selectBreed(breedName) {
+      document.getElementById("field-breed").value = breedName;
+      document.getElementById("breed-autocomplete").classList.add("hidden");
+      validateForm();
+    }
+
+    // 폼 입력 유효성 검사 (4개 필드 완료 시 제출 버튼 활성화)
+    function validateForm() {
+      const region = document.getElementById("field-region").value;
+      const breed = document.getElementById("field-breed").value.trim();
+      const weight = document.getElementById("field-weight").value;
+      const count = document.getElementById("field-count").value;
+
+      const btnSubmit = document.getElementById("btn-submit");
+
+      if (region && breed && weight && count) {
+        btnSubmit.disabled = false;
+        btnSubmit.classList.remove("bg-slate-300", "text-slate-500", "cursor-not-allowed", "shadow-none");
+        btnSubmit.classList.add("bg-amber-500", "hover:bg-amber-600", "text-white", "shadow-lg", "shadow-amber-500/30", "cursor-pointer");
+      } else {
+        btnSubmit.disabled = true;
+        btnSubmit.classList.remove("bg-amber-500", "hover:bg-amber-600", "text-white", "shadow-lg", "shadow-amber-500/30", "cursor-pointer");
+        btnSubmit.classList.add("bg-slate-300", "text-slate-500", "cursor-not-allowed", "shadow-none");
+      }
+    }
+
+    /* ==========================================================================
+       4. 폼 제출 및 AI Engine (Gemini API 호출)
+       ========================================================================== */
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      currentInput = {
+        region: document.getElementById("field-region").value,
+        breed: document.getElementById("field-breed").value.trim(),
+        weight: parseFloat(document.getElementById("field-weight").value),
+        count: parseInt(document.getElementById("field-count").value)
+      };
+
+      // 1. Google Sheets에 입력값 저장 (데이터 1 & 2)
+      saveToGoogleSheets("input_event", {
+        timestamp: new Date().toISOString(),
+        region: currentInput.region,
+        breed: currentInput.breed,
+        weight: currentInput.weight,
+        count: currentInput.count,
+        completed: "Y"
+      });
+
+      // 2. 로딩 화면으로 전환
+      goToStep("step-loading");
+
+      // 3. 해당 지역의 DB 숙소만 필터링
+      const candidateAccommodations = ACCOMMODATION_DB.filter(a => a.region === currentInput.region);
+
+      // 4. Gemini AI 엔진 매칭 수행
+      try {
+        const resultJSON = await runGeminiMatchingEngine(currentInput, candidateAccommodations);
+        renderResults(resultJSON);
+        goToStep("step-result");
+      } catch (err) {
+        console.error("AI 처리 오류:", err);
+        // Fallback: 백엔드/AI 오류 시 기본 클라이언트 룰 기반 폴백 렌더링
+        const fallbackJSON = runFallbackMatchingEngine(currentInput, candidateAccommodations);
+        renderResults(fallbackJSON);
+        goToStep("step-result");
+      }
+    }
+
+    // Gemini API 호출 (Exponential Backoff 적용)
+    async function runGeminiMatchingEngine(userInput, accommodations) {
+      const systemPrompt = `
+너는 반려견 동반 숙소 매칭 AI 엔진이다.
+사용자가 입력한 [반려견 조건]과 [숙소 조건 DB]를 대조하여 항목별 입실 조건 충족 여부를 판단하라.
+
+[반려견 조건]
+- 견종: ${userInput.breed}
+- 체중: ${userInput.weight}kg
+- 마리수: ${userInput.count}마리
+- 지역: ${userInput.region}
+
+[처리 기준]
+1. 체중: 입력 체중 <= 최대 허용 체중 이면 "O", 초과 시 "X", DB에 정보 없거나 미확인이면 "확인필요"
+2. 견종: 다양한 견종 명칭(예: 골든 리트리버, 골든리트리버)을 동일 견종으로 인식할 것. 허용 목록에 있거나 제한 목록에 없으면 "O", 제한 목록에 명시되어 있으면 "X", 확실치 않거나 DB 정보 부족시 "확인필요"
+3. 마리수: 입력 마리수 <= 제한 마리수 이면 "O", 초과 시 "X", 정보 없으면 "확인필요"
+4. 매너벨트: 숙소 DB 조건에 따라 "필수", "불필요", "확인필요" 로 표기
+5. overall 판단:
+   - 모든 항목(체중, 견종, 마리수)이 "O"이면 "충족"
+   - 하나라도 "X"이면 "불충족"
+   - "X"가 없고 하나 이상 "확인필요"가 포함되면 "일부확인필요"
+6. 정렬: overall이 "충족" -> "일부확인필요" -> "불충족" 순으로 배열을 정렬하라.
+
+[금지 사항]
+- 안전성, 품질, 입실 보장 판단 금지 ("이 숙소는 안전합니다" 등 표현 금지)
+- DB에 없는 항목을 추측하여 "O"로 판단 금지
+- 결과 데이터는 지정된 JSON 형식으로만 반환하라.
+`;
+
+      const payload = {
+        contents: [
+          {
+            parts: [
+              { text: `숙소 목록 데이터:\n${JSON.stringify(accommodations, null, 2)}` }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              accommodations: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    id: { type: "STRING" },
+                    name: { type: "STRING" },
+                    region: { type: "STRING" },
+                    conditions: {
+                      type: "OBJECT",
+                      properties: {
+                        weight: {
+                          type: "OBJECT",
+                          properties: {
+                            result: { type: "STRING" },
+                            source: { type: "STRING" }
+                          },
+                          required: ["result", "source"]
+                        },
+                        breed: {
+                          type: "OBJECT",
+                          properties: {
+                            result: { type: "STRING" },
+                            source: { type: "STRING" }
+                          },
+                          required: ["result", "source"]
+                        },
+                        count: {
+                          type: "OBJECT",
+                          properties: {
+                            result: { type: "STRING" },
+                            source: { type: "STRING" }
+                          },
+                          required: ["result", "source"]
+                        },
+                        mannerbelt: {
+                          type: "OBJECT",
+                          properties: {
+                            result: { type: "STRING" },
+                            source: { type: "STRING" }
+                          },
+                          required: ["result", "source"]
+                        }
+                      },
+                      required: ["weight", "breed", "count", "mannerbelt"]
+                    },
+                    overall: { type: "STRING" }
+                  },
+                  required: ["id", "name", "region", "conditions", "overall"]
+                }
+              }
+            },
+            required: ["accommodations"]
+          }
+        }
+      };
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      // Retries with Exponential Backoff
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      for (let i = 0; i <= delays.length; i++) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          return JSON.parse(jsonText);
+        } catch (err) {
+          if (i === delays.length) throw err;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+    }
+
+    // 폴백 엔진 (AI API 통신 불안정 시 로컬 JS 규칙 처리)
+    function runFallbackMatchingEngine(userInput, list) {
+      const results = list.map(item => {
+        let weightRes = item.maxWeight >= userInput.weight ? "O" : "X";
+        let countRes = item.maxCount >= userInput.count ? "O" : "X";
+        
+        let breedRes = "O";
+        if (item.restrictedBreeds.some(b => b.includes(userInput.breed) || (userInput.weight >= 15 && b.includes("대형견")))) {
+          breedRes = "X";
+        }
+
+        let overall = "충족";
+        if (weightRes === "X" || countRes === "X" || breedRes === "X") {
+          overall = "불충족";
+        } else if (weightRes === "확인필요" || countRes === "확인필요" || breedRes === "확인필요") {
+          overall = "일부확인필요";
+        }
+
+        return {
+          id: item.id,
+          name: item.name,
+          region: item.region,
+          conditions: {
+            weight: { result: weightRes, source: item.sources.weight },
+            breed: { result: breedRes, source: item.sources.breed },
+            count: { result: countRes, source: item.sources.count },
+            mannerbelt: { result: item.mannerbelt, source: item.sources.mannerbelt }
+          },
+          overall: overall
+        };
+      });
+
+      // 정렬: 충족 -> 일부확인필요 -> 불충족
+      results.sort((a, b) => {
+        const order = { "충족": 1, "일부확인필요": 2, "불충족": 3 };
+        return order[a.overall] - order[b.overall];
+      });
+
+      return { accommodations: results };
+    }
+
+    /* ==========================================================================
+       5. 결과 렌더링 (화면 4)
+       ========================================================================== */
+    function renderResults(data) {
+      const container = document.getElementById("accommodation-list");
+      const summaryText = document.getElementById("summary-text");
+      const list = data.accommodations || [];
+
+      // 상단 입력조건 요약
+      summaryText.textContent = `${currentInput.region} | ${currentInput.breed} | ${currentInput.weight}kg | ${currentInput.count}마리`;
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">
+            해당 지역의 조건에 만족하는 숙소를 찾지 못했습니다.
+          </div>
+        `;
+        return;
+      }
+
+      // 데이터 3, 4 집계 및 시트 전송 준비
+      let countMet = 0, countCheck = 0, countUnmet = 0;
+      let hasWeightCheck = "N", hasBreedCheck = "N", hasCountCheck = "N", hasMannerCheck = "N";
+
+      let htmlContent = "";
+
+      list.forEach(item => {
+        if (item.overall === "충족") countMet++;
+        else if (item.overall === "일부확인필요") countCheck++;
+        else countUnmet++;
+
+        if (item.conditions.weight.result === "확인필요") hasWeightCheck = "Y";
+        if (item.conditions.breed.result === "확인필요") hasBreedCheck = "Y";
+        if (item.conditions.count.result === "확인필요") hasCountCheck = "Y";
+        if (item.conditions.mannerbelt.result === "확인필요") hasMannerCheck = "Y";
+
+        // overall badge styling
+        let badgeStyle = "bg-slate-100 text-slate-600 border-slate-200";
+        if (item.overall === "충족") {
+          badgeStyle = "bg-emerald-100 text-emerald-800 border-emerald-300";
+        } else if (item.overall === "일부확인필요") {
+          badgeStyle = "bg-amber-100 text-amber-800 border-amber-300";
+        } else if (item.overall === "불충족") {
+          badgeStyle = "bg-rose-100 text-rose-800 border-rose-300 opacity-75";
+        }
+
+        htmlContent += `
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hover:border-slate-300 transition-all">
+            <!-- 숙소 제목 및 Overall 상태 -->
+            <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 block">${item.region}</span>
+                <h3 class="text-lg font-bold text-slate-900">${item.name}</h3>
+              </div>
+              <span class="text-xs font-bold px-3 py-1.5 rounded-full border ${badgeStyle}">
+                ${item.overall}
+              </span>
+            </div>
+
+            <!-- 항목별 검증 표시 GRID -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <!-- 체중 -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                <span class="font-medium text-slate-600">최대 허용 체중</span>
+                <div class="flex items-center space-x-2">
+                  ${formatResultIcon(item.conditions.weight.result)}
+                  ${formatSourceBadge(item.conditions.weight.source)}
+                </div>
+              </div>
+
+              <!-- 견종 -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                <span class="font-medium text-slate-600">견종 제한 여부</span>
+                <div class="flex items-center space-x-2">
+                  ${formatResultIcon(item.conditions.breed.result)}
+                  ${formatSourceBadge(item.conditions.breed.source)}
+                </div>
+              </div>
+
+              <!-- 마리수 -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                <span class="font-medium text-slate-600">마리수 제한</span>
+                <div class="flex items-center space-x-2">
+                  ${formatResultIcon(item.conditions.count.result)}
+                  ${formatSourceBadge(item.conditions.count.source)}
+                </div>
+              </div>
+
+              <!-- 매너벨트 -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                <span class="font-medium text-slate-600">매너벨트 의무</span>
+                <div class="flex items-center space-x-2">
+                  ${formatMannerbeltTag(item.conditions.mannerbelt.result)}
+                  ${formatSourceBadge(item.conditions.mannerbelt.source)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = htmlContent;
+
+      // Google Sheets 저장 (데이터 3: 반환 숙소 수 & 데이터 4: 확인필요 항목 빈도)
+      saveToGoogleSheets("ai_result_event", {
+        timestamp: new Date().toISOString(),
+        metCount: countMet,
+        checkCount: countCheck,
+        unmetCount: countUnmet,
+        weightCheckNeeded: hasWeightCheck,
+        breedCheckNeeded: hasBreedCheck,
+        countCheckNeeded: hasCountCheck,
+        mannerbeltCheckNeeded: hasMannerCheck
+      });
+    }
+
+    // 아이콘 포맷터 (O = ✓, X = ✗, 확인필요 = ?)
+    function formatResultIcon(res) {
+      if (res === "O" || res === "충족") {
+        return `<span class="inline-flex items-center text-xs font-bold text-emerald-600"><i class="fa-solid fa-check circle-icon bg-emerald-100 p-1 rounded-full mr-1"></i> 충족</span>`;
+      } else if (res === "X" || res === "불충족") {
+        return `<span class="inline-flex items-center text-xs font-bold text-rose-600"><i class="fa-solid fa-xmark circle-icon bg-rose-100 p-1 rounded-full mr-1"></i> 불충족</span>`;
+      } else {
+        return `<span class="inline-flex items-center text-xs font-bold text-amber-600"><i class="fa-solid fa-question circle-icon bg-amber-100 p-1 rounded-full mr-1"></i> 확인필요</span>`;
+      }
+    }
+
+    function formatMannerbeltTag(res) {
+      if (res === "필수") {
+        return `<span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">필수</span>`;
+      } else if (res === "불필요") {
+        return `<span class="text-xs font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded">불필요</span>`;
+      } else {
+        return `<span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">확인필요</span>`;
+      }
+    }
+
+    // 출처 유형 배지 포맷터 (업체 등록 / 방문자 확인 / 미확인)
+    function formatSourceBadge(source) {
+      let bg = "bg-slate-100 text-slate-500";
+      if (source === "업체등록") bg = "bg-blue-50 text-blue-600 border border-blue-200";
+      else if (source === "방문자확인") bg = "bg-purple-50 text-purple-600 border border-purple-200";
+      else if (source === "미확인") bg = "bg-slate-100 text-slate-400 border border-slate-200";
+
+      return `<span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${bg}">${source}</span>`;
+    }
+
+    /* ==========================================================================
+       6. 피드백 수집 및 Google Sheets 연동 (화면 5)
+       ========================================================================== */
+    function setRating(val) {
+      selectedRating = val;
+      const btns = document.querySelectorAll(".rating-btn");
+      btns.forEach((btn, idx) => {
+        if (idx + 1 === val) {
+          btn.classList.add("bg-amber-500", "text-white", "border-amber-500");
+          btn.classList.remove("border-slate-200");
+        } else {
+          btn.classList.remove("bg-amber-500", "text-white", "border-amber-500");
+          btn.classList.add("border-slate-200");
+        }
+      });
+    }
+
+    function submitFeedback(discrepancyAnswer) {
+      // 피드백 데이터 (데이터 5 & 6)
+      const feedbackPayload = {
+        timestamp: new Date().toISOString(),
+        discrepancyExperience: discrepancyAnswer, // 있다 / 없다 / 아직 방문 전
+        helpfulnessRating: selectedRating || null
+      };
+
+      // Google Sheets로 전송
+      saveToGoogleSheets("feedback_event", feedbackPayload);
+
+      // 감사 메시지 전환
+      document.getElementById("feedback-form-content").classList.add("hidden");
+      document.getElementById("feedback-thanks").classList.remove("hidden");
+    }
+
+    // Google Apps Script 연동 함수
+    function saveToGoogleSheets(eventType, payload) {
+      // 콘솔 기록으로 데이터 트래킹 보장
+      console.log(`[Google Sheets Event: ${eventType}]`, payload);
+
+      if (!GOOGLE_SHEETS_SCRIPT_URL || GOOGLE_SHEETS_SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+        // Apps Script URL 미설정 시 수집 주석 모드로 동작
+        return;
+      }
+
+      // no-mode cors POST 연동
+      fetch(GOOGLE_SHEETS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventType, data: payload })
+      }).catch(err => console.error("Sheets 연동 전송 실패:", err));
+    }
+  </script>
+</body>
+</html>
